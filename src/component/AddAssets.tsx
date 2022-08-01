@@ -1,5 +1,5 @@
 import React,{useState,useContext} from 'react'
-import {useFormik} from 'formik'
+import {Formik,Form,Field,ErrorMessage} from 'formik'
 import * as Yup from 'yup'
 import {AssetManagerContext} from './NodeContext'
 
@@ -55,7 +55,11 @@ function AddAssets() {
 
  
 
-
+  const resetformm=()=>{
+    setformval(initialValues);
+  setreset(false);
+  setbuttonname("Add Asset"); 
+  }
 const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number)=>{
   setbuttonname("Update Assets");
   var a=document.getElementById('name'+id.toString()) as HTMLElement
@@ -80,94 +84,90 @@ const handleRemoveSpecificRow = (index:number) => {
   const tempRows = [...assetscontext.assets]; // to avoid  direct state mutation
   tempRows.splice(index, 1);
   assetscontext.setAssets(tempRows);
-  formik.resetForm({});
 setformval(initialValues);
 setreset(false);
 setbuttonname("Add Assets");  
 };
 
-const resetform=()=>{
-  formik.resetForm();
-}
 const [reset, setreset] = useState(false);
   const [formval, setformval] = useState(initialValues);
   const [buttonname, setbuttonname] = useState("Add Assets");
- const formik=useFormik({ 
-  initialValues:formval,
-  onSubmit:values=>{
-    if(reset){
-      //Find index of specific object using findIndex method.    
-var objIndex = assetscontext.assets.findIndex((obj => obj.AssetsId === SavedValues.AssetsId));
 
-//Log object to Console.
-//console.log("Before update: ", List_assetss[objIndex]);
-
-//Update object's name property.
-assetscontext.assets[objIndex].AssetModel=values.AssetModel;
-assetscontext.assets[objIndex].AssetsCompanyName=values.AssetsCompanyName;
-assetscontext.assets[objIndex].AssetsSerialNo=values.AssetsSerialNo;
-assetscontext.assets[objIndex].AsstsName=values.AsstsName;
-assetscontext.assets[objIndex].AssetAsigned=false;
-//Log object to console again.
-//console.log("After update: ", values)
-
-    }
-    else{
-      values.AssetsId=assetscontext.assetsidd();
-      values.AssetAsigned=false;
-      //let a=assetsid+1;
-      ///setassetsid(a);
-
-      assetscontext.setAssets([...assetscontext.assets,values]);
-      //assetscontext.assets.push(values);
-     // updatechanges(assetscontext.assets);
-    }
-    
-formik.resetForm({});
-setformval(initialValues);
-setreset(false);
-setbuttonname("Add Assets");  
-  },
-  validationSchema,
-  enableReinitialize:true
-  
- })
 ///console.log(formik.values);
   return (
     <>
+    <Formik
+    initialValues={formval}
+    validationSchema={validationSchema}
+    enableReinitialize={true}
+    onSubmit={(values,{resetForm})=>{
+      if(reset){
+        //Find index of specific object using findIndex method.    
+  var objIndex = assetscontext.assets.findIndex((obj => obj.AssetsId === SavedValues.AssetsId));
+  
+  //Log object to Console.
+  //console.log("Before update: ", List_assetss[objIndex]);
+  
+  //Update object's name property.
+  assetscontext.assets[objIndex].AssetModel=values.AssetModel;
+  assetscontext.assets[objIndex].AssetsCompanyName=values.AssetsCompanyName;
+  assetscontext.assets[objIndex].AssetsSerialNo=values.AssetsSerialNo;
+  assetscontext.assets[objIndex].AsstsName=values.AsstsName;
+  assetscontext.assets[objIndex].AssetAsigned=false;
+  //Log object to console again.
+  //console.log("After update: ", values)
+  
+      }
+      else{
+        values.AssetsId=assetscontext.assetsidd();
+        values.AssetAsigned=false;
+        //let a=assetsid+1;
+        ///setassetsid(a);
+  
+        assetscontext.setAssets([...assetscontext.assets,values]);
+        //assetscontext.assets.push(values);
+       // updatechanges(assetscontext.assets);
+      }
+      
+  resetForm({});
+  setformval(initialValues);
+  setreset(false);
+  setbuttonname("Add Assets");  
+    }}>
     <div className='form-control'>
-      <form onSubmit={formik.handleSubmit}>
+      <Form>
         
         <div className="form-controlc">
         <label className='adlabel' htmlFor='AsstsName'>Asstes Name</label>
-        <input  className='adinput' type='text' id='AsstsName' name='AsstsName' onBlur={formik.handleBlur} onChange={formik.handleChange} value={formik.values.AsstsName}/>
-        {formik.touched.AsstsName && formik.errors.AsstsName? <div className='errordisplay'>{formik.errors.AsstsName}</div>:null}
+        <Field  className='adinput' type='text' id='AsstsName' name='AsstsName'/>
+        <ErrorMessage component="span" className='errordisplay' name='AsstsName'></ErrorMessage>
         </div>
 
         <div className="form-controlc">
         <label className='adlabel' htmlFor='AssetModel'>Asstes Model</label>
-        <input className='adinput' type='text' id='AssetModel' name='AssetModel' onBlur={formik.handleBlur}  onChange={formik.handleChange} value={formik.values.AssetModel}/>
-        {formik.touched.AssetModel && formik.errors.AssetModel? <div className='errordisplay'>{formik.errors.AssetModel}</div>:null}
+        <Field className='adinput' type='text' id='AssetModel' name='AssetModel'/>
+        <ErrorMessage component="span" className='errordisplay' name='AssetModel'></ErrorMessage>
         </div>
 
         <div className="form-controlc">
         <label className='adlabel' htmlFor='AssetsSerialNo'>Asstes Serial No.</label>
-        <input className='adinput' type='text' id='AssetsSerialNo' name='AssetsSerialNo' onBlur={formik.handleBlur}  onChange={formik.handleChange} value={formik.values.AssetsSerialNo}/>
-        {formik.touched.AssetsSerialNo && formik.errors.AssetsSerialNo? <div className='errordisplay'>{formik.errors.AssetsSerialNo}</div>:null}
-        </div>
+        <Field className='adinput' type='text' id='AssetsSerialNo' name='AssetsSerialNo'/>
+        <ErrorMessage component="span" className='errordisplay' name='AssetsSerialNo'></ErrorMessage>
+         </div>
 
         <div className="form-controlc">
         <label className='adlabel' htmlFor='AssetsCompanyName'>Asstes Company Name</label>
-        <input className='adinput' type='text' id='AssetsCompanyName' name='AssetsCompanyName' onBlur={formik.handleBlur}  onChange={formik.handleChange} value={formik.values.AssetsCompanyName}/>
-        {formik.touched.AssetsCompanyName && formik.errors.AssetsCompanyName? <div className='errordisplay'>{formik.errors.AssetsCompanyName}</div>:null}
+        <Field className='adinput' type='text' id='AssetsCompanyName' name='AssetsCompanyName' />
+        <ErrorMessage component="span" className='errordisplay' name='AssetsCompanyName'></ErrorMessage>
         </div>
 
        
 
         <button  className='submitform' type='submit'>{buttonname}</button>
-        <button className='submitform' onClick={resetform}>Reset</button>
-       </form>
+        <button type='reset' className='submitform' onClick={resetformm}>Reset</button>
+       </Form>
     </div>
+    </Formik>
     <div   className='table_content list'>
     <table className='table'>
     <caption>List Of Assets Available</caption>
