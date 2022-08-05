@@ -23,25 +23,45 @@ const validationSchema=Yup.object({
   EmployeeDepName:Yup.string().required("Employee Dep. Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
 })
 
-function TempAddEmployee() {
+function AddEmployee() {
+
+
+
   //implement employee context
   const employeecontext=useContext(AssetManagerContext);
 
-const handleRemoveSpecificRow = (index:number) => {
-  const tempRows = [...employeecontext.employees]; // to avoid  direct state mutation
-  tempRows.splice(index, 1);
-  employeecontext.setEmployees(tempRows);
-  //formik.resetForm({});
-setformval(initialValues);
-setreset(false);
-setbuttonname("Add Employee");  
+const handleRemoveSpecificRow = (index:number,employeeid:number) => {
+  try {
+    fetch("http://localhost:51992/Employees/"+employeeid,
+      {
+          method: "DELETE",
+        
+      }).
+      then(response => {
+        if(response.status===200)
+        {
+          setformval(initialValues);
+          setreset(false);
+          setbuttonname("Add Employee"); 
+          const tempRows = [...employeecontext.employees]; // to avoid  direct state mutation
+          tempRows.splice(index, 1);
+          employeecontext.setEmployees(tempRows);
+          
+        }
+      })
+     
+  } catch (err) {
+    console.log(err);
+  }
+
+  
 };
 const resetformm=()=>{
   setformval(initialValues);
 setreset(false);
 setbuttonname("Add Employee"); 
 }
-const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number)=>{
+const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number,index:number)=>{
 setbuttonname("Update Employee");
 var a=document.getElementById('name'+id.toString()) as HTMLElement
 var b=document.getElementById('address'+id.toString()) as HTMLElement
@@ -50,7 +70,7 @@ SavedValues.EmployeeId=id;
 SavedValues.EmployeeName=a.innerText;
 SavedValues.EmployeeAddress=b.innerText;
 SavedValues.EmployeeDepName=c.innerText;
-
+setindex(index);
 setformval(SavedValues);
 setreset(true);
 
@@ -61,34 +81,59 @@ setreset(true);
 const [reset, setreset] = useState(false);
 const [formval, setformval] = useState(initialValues);
 const [buttonname, setbuttonname] = useState("Add Employee");
-
+const [index, setindex] = useState(0);
     
   return (
     <>
     <Formik
     initialValues={formval}
     validationSchema={validationSchema}
-    onSubmit={(values,{resetForm})=>{
+    onSubmit={ (values,{resetForm})=>{
       if(reset){
-        //Find index of specific object using findIndex method.    
-    var objIndex = employeecontext.employees.findIndex((obj => obj.EmployeeId === SavedValues.EmployeeId));
-    
-    //Log object to Console.
-    //console.log("Before update: ", List_assetss[objIndex]);
-    
-    //Update object's name property.
-    employeecontext.employees[objIndex].EmployeeAddress=values.EmployeeAddress;
-    employeecontext.employees[objIndex].EmployeeName=values.EmployeeName;
-    employeecontext.employees[objIndex].EmployeeDepName=values.EmployeeDepName;
+    try {
+      fetch("http://localhost:51992/Employees/"+SavedValues.EmployeeId,
+        {
+            method: "PUT",
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+         },
+            body: JSON.stringify({
+              EmployeeId:SavedValues.EmployeeId,
+              EmployeeName: values.EmployeeName,
+              EmployeeAddress: values.EmployeeAddress,
+              EmployeeDepName: values.EmployeeDepName,
+            })
+        }).
+        then(response => response.json())
+        .then(data => {
+          const tempRows = [...employeecontext.employees]; // to avoid  direct state mutation
+          tempRows.splice(index, 1,data);
+          employeecontext.setEmployees(tempRows);
+        });
+    } catch (err) {
+      console.log(err);
+    }
     //console.log("After update: ", values)
       }
       else{
-        values.EmployeeId=employeecontext.empidd();
-       // setNames(names => [...names, newName])
-       employeecontext.setEmployees([...employeecontext.employees,values]);
-        //employeecontext.employees.push(values);
-        // List_Employeee.push(values);
-       // formik.resetForm();
+        try {
+          fetch("http://localhost:51992/Employees",
+            {
+                method: "POST",
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+             },
+                body: JSON.stringify(values)
+            }).
+            then(response => response.json())
+            .then(data => {
+              employeecontext.setEmployees([...employeecontext.employees,data]);
+            });
+        } catch (err) {
+          console.log(err);
+        }
       }      
       resetForm({});
       setformval(initialValues);
@@ -141,14 +186,14 @@ const [buttonname, setbuttonname] = useState("Add Employee");
 employeecontext.employees.map((employee,index)=>{
       return(
         
-          <tr key={index} id={'tr'+employee.EmployeeId.toString()}>
+          <tr key={index} id={'tr'+employee.EmployeeId}>
               <td><span>{employee.EmployeeId}</span></td>
              
-              <td><p id={'name'+employee.EmployeeId.toString()}>{employee.EmployeeName}</p></td>
-              <td><p id={'address'+employee.EmployeeId.toString()}> {employee.EmployeeAddress}</p></td>
-              <td><p id={'depname'+employee.EmployeeId.toString()}>{employee.EmployeeDepName}</p></td>
-              <td><button type='button' onClick={(event)=>abe(event,employee.EmployeeId)}>Edit</button></td>
-              <td><button type='button' onClick={(event)=>handleRemoveSpecificRow(index)}>Delete</button></td>
+              <td><p id={'name'+employee.EmployeeId}>{employee.EmployeeName}</p></td>
+              <td><p id={'address'+employee.EmployeeId}> {employee.EmployeeAddress}</p></td>
+              <td><p id={'depname'+employee.EmployeeId}>{employee.EmployeeDepName}</p></td>
+              <td><button type='button' onClick={(event)=>abe(event,employee.EmployeeId,index)}>Edit</button></td>
+              <td><button type='button' onClick={(event)=>handleRemoveSpecificRow(index,employee.EmployeeId)}>Delete</button></td>
           </tr>
          
       )
@@ -167,4 +212,4 @@ employeecontext.employees.map((employee,index)=>{
   );
 }
 
-export default TempAddEmployee;
+export default AddEmployee;

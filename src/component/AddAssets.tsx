@@ -31,24 +31,6 @@ const validationSchema=Yup.object({
     AssetAsigned:false
   }
 
-  // function updatechanges(a:List_asset[])
-  // {
-  //   var aa=document.getElementById("addass") as HTMLElement
-  //   var data="";
-  //   a.forEach(function (value) {  
-  //    data="<tr key="+value.AssetsId+" id='aa'+"+value.AssetsId+">";
-  //    data+="<td key="+value.AssetsId+"><span>"+value.AssetsId+"</span></td>";
-  //    data+=" <td><p id='name'+"+value.AssetsId+">"+value.AsstsName+"</p></td>";
-  //    data+="<td><p id='serial'+"+value.AssetsId+">"+value.AssetsSerialNo+"</p></td>";
-  //    data+="<td><p id='company'+"+value.AssetsId+">"+value.AssetsCompanyName+"</p></td>";
-  //    data+="<td><p id='model'+"+value.AssetsId+">"+value.AssetModel+"</p></td>";
-  //    data+="<td><button id='edit"+value.AssetsId+"' onClick={(event)=>abe(event,"+value.AssetsId+")}>Edit</button></td>";
-  //    data+="<td><button onClick={(event)=>handleclickDelete(event,"+value.AssetsId+")}>Delete</button></td>";
-  //    data+="</tr>";
-  //   });  
-  //  aa.innerHTML=data;
-  // }
-
 function AddAssets() {
   //implement assets context
   const assetscontext=useContext(AssetManagerContext);
@@ -60,7 +42,7 @@ function AddAssets() {
   setreset(false);
   setbuttonname("Add Asset"); 
   }
-const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number)=>{
+const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number,index:number)=>{
   setbuttonname("Update Assets");
   var a=document.getElementById('name'+id.toString()) as HTMLElement
   var b=document.getElementById('serial'+id.toString()) as HTMLElement
@@ -72,27 +54,41 @@ const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number)=>{
   SavedValues.AssetsSerialNo=b.innerText;
   SavedValues.AssetsCompanyName=c.innerText;
   SavedValues.AssetAsigned=false;
-
+  setindex(index);
   setformval(SavedValues);
   setreset(true);
   
 }
 
-const handleRemoveSpecificRow = (index:number) => {
-  console.log("deleted");
-  
-  const tempRows = [...assetscontext.assets]; // to avoid  direct state mutation
-  tempRows.splice(index, 1);
-  assetscontext.setAssets(tempRows);
-setformval(initialValues);
-setreset(false);
-setbuttonname("Add Assets");  
+const handleRemoveSpecificRow = (index:number,assetid:number) => {
+  try {
+    fetch("http://localhost:51992/Asstes/"+assetid,
+      {
+          method: "DELETE",
+        
+      }).
+      then(response => {
+        if(response.status===200)
+        {
+          setformval(initialValues);
+          setreset(false);
+          setbuttonname("Add Employee"); 
+          const tempRows = [...assetscontext.assets]; // to avoid  direct state mutation
+          tempRows.splice(index, 1);
+          assetscontext.setAssets(tempRows);
+          
+        }
+      })
+     
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 const [reset, setreset] = useState(false);
   const [formval, setformval] = useState(initialValues);
   const [buttonname, setbuttonname] = useState("Add Assets");
-
+  const [index, setindex] = useState(0);
 ///console.log(formik.values);
   return (
     <>
@@ -102,31 +98,51 @@ const [reset, setreset] = useState(false);
     enableReinitialize={true}
     onSubmit={(values,{resetForm})=>{
       if(reset){
-        //Find index of specific object using findIndex method.    
-  var objIndex = assetscontext.assets.findIndex((obj => obj.AssetsId === SavedValues.AssetsId));
-  
-  //Log object to Console.
-  //console.log("Before update: ", List_assetss[objIndex]);
-  
-  //Update object's name property.
-  assetscontext.assets[objIndex].AssetModel=values.AssetModel;
-  assetscontext.assets[objIndex].AssetsCompanyName=values.AssetsCompanyName;
-  assetscontext.assets[objIndex].AssetsSerialNo=values.AssetsSerialNo;
-  assetscontext.assets[objIndex].AsstsName=values.AsstsName;
-  assetscontext.assets[objIndex].AssetAsigned=false;
-  //Log object to console again.
-  //console.log("After update: ", values)
-  
+        try {
+          fetch("http://localhost:51992/Asstes/"+SavedValues.AssetsId,
+            {
+                method: "PUT",
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+             },
+                body: JSON.stringify({
+                  AssetsId:SavedValues.AssetsId,
+                  AsstsName: values.AsstsName,
+                  AssetsCompanyName: values.AssetsCompanyName,
+                  AssetModel: values.AssetModel,
+                  AssetAsigned:values.AssetAsigned,
+                  AssetsSerialNo:values.AssetsSerialNo
+                })
+            }).
+            then(response => response.json())
+            .then(data => {
+              const tempRows = [...assetscontext.assets]; // to avoid  direct state mutation
+              tempRows.splice(index, 1,data);
+             assetscontext.setAssets(tempRows);
+            });
+        } catch (err) {
+          console.log(err);
+        }
       }
       else{
-        values.AssetsId=assetscontext.assetsidd();
-        values.AssetAsigned=false;
-        //let a=assetsid+1;
-        ///setassetsid(a);
-  
-        assetscontext.setAssets([...assetscontext.assets,values]);
-        //assetscontext.assets.push(values);
-       // updatechanges(assetscontext.assets);
+        try {
+          fetch("http://localhost:51992/Asstes",
+            {
+                method: "POST",
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+             },
+                body: JSON.stringify(values)
+            }).
+            then(response => response.json())
+            .then(data => {
+              assetscontext.setAssets([...assetscontext.assets,data]);
+            });
+        } catch (err) {
+          console.log(err);
+        }
       }
       
   resetForm({});
@@ -196,8 +212,8 @@ assetscontext.assets.map((assets,index)=>{
                 <td><p id={'serial'+assets.AssetsId.toString()}> {assets.AssetsSerialNo}</p></td>
                 <td><p id={'company'+assets.AssetsId.toString()}>{assets.AssetsCompanyName}</p></td>
                 <td><p id={'model'+assets.AssetsId.toString()}>{assets.AssetModel}</p></td>
-                <td><button id={"edit"+assets.AssetsId.toString()} onClick={(event)=>abe(event,assets.AssetsId)}>Edit</button></td>
-                <td><button onClick={(event)=>handleRemoveSpecificRow(index)}>Delete</button></td>
+                <td><button id={"edit"+assets.AssetsId.toString()} onClick={(event)=>abe(event,assets.AssetsId,index)}>Edit</button></td>
+                <td><button onClick={(event)=>handleRemoveSpecificRow(index,assets.AssetsId)}>Delete</button></td>
             </tr>
         )
         
@@ -209,32 +225,7 @@ assetscontext.assets.map((assets,index)=>{
   </table>
       
       </div>
-
-   
-    
- 
     </>
   )
 }
-
-// function AssetsList(){
-//     //implement assets context
-//     const assetscontext=useContext(AssetManagerContext);
-//     const handleclickDelete=(event:React.MouseEvent<HTMLButtonElement>,id:number):void=>{
-//       // var a=document.getElementById("aa"+id.toString());
-//       const asssetdata=assetscontext.assets;
-//       asssetdata.splice(assetscontext.assets.findIndex(a => a.AssetsId === id) , 1);
-//       assetscontext.setAssets(asssetdata);
-//      //  a?.remove();
-//    <AssetsList></AssetsList>
-//       console.log("deleted");
-      
-      
-//      }
-    
-// return(
- 
-// )
-// }
-
 export default AddAssets

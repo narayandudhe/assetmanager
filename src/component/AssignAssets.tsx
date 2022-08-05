@@ -14,22 +14,39 @@ function AssignAssets() {
   //implement context
   const assetManagerContext=useContext(AssetManagerContext);
   
-  const handleclick=(index:number,aid:number):void=>{
-    //change status to not assigned
-    var objIndex = assetManagerContext.assets.findIndex((obj => obj.AssetsId === aid));
-    assetManagerContext.assets[objIndex].AssetAsigned=false;
-    
-    console.log("deleted");
-  
-    const tempRows = [...assetManagerContext.assignedAssets]; // to avoid  direct state mutation
-    tempRows.splice(index, 1);
-    assetManagerContext.setAssignedAssets(tempRows);
+  const handleclick=(index:number,aid:number,asid:number):void=>{
+    try {
+      fetch("http://localhost:51992/AsstsAssigned/"+asid,
+        {
+            method: "DELETE",
+          
+        }).
+        then(response => {
+          if(response.status===200)
+          {
+            const tempRows = [...assetManagerContext.assignedAssets]; // to avoid  direct state mutation
+            tempRows.splice(index, 1);
+            assetManagerContext.setAssignedAssets(tempRows);
+            const url = "http://localhost:51992/Asstes";
+            fetch(url)
+              .then((response) => response.json())
+              .then(
+                (result) => {
+                  assetManagerContext.setAssets(result);
+                }
+              )
+              .catch((error) => console.log(error));
+          }
+        })
+     
+    } catch (err) {
+      console.log(err);
+    }
     } 
   const resetform=()=>{
     formik.resetForm();
   }
 
-  //const [assignid, setassignid] = useState(100);
     const formik=useFormik({
         initialValues:{
           AsstsName:'',
@@ -44,17 +61,38 @@ function AssignAssets() {
         },
         onSubmit:values=>{
           values.DateOfAssigned=new Date().getFullYear()+'-'+("0"+(new Date().getMonth()+1)).slice(-2)+'-'+("0"+new Date().getDate()).slice(-2);
-          values.AssignedId=assetManagerContext.assignedid();
-          var objIndex = assetManagerContext.assets.findIndex((obj => obj.AssetsId === values.AssetsId));
-          assetManagerContext.assets[objIndex].AssetAsigned=true;
-          //let a=assignid+1;
-        //  setassignid(a);
-          
-        //assetManagerContext.assignedAssets.push(values);
-
-        assetManagerContext.setAssignedAssets([...assetManagerContext.assignedAssets,values]);
          
-          formik.resetForm();
+          try {
+            fetch("http://localhost:51992/AsstsAssigned",
+              {
+                  method: "POST",
+                  headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+               },
+                  body: JSON.stringify(values)
+              }).
+              then(response => response.json())
+              .then(data => {
+                assetManagerContext.setAssignedAssets([...assetManagerContext.assignedAssets,data]);
+                formik.resetForm();
+                const url = "http://localhost:51992/Asstes";
+                fetch(url)
+                  .then((response) => response.json())
+                  .then(
+                    (result) => {
+                      assetManagerContext.setAssets(result);
+                    }
+                  )
+                  .catch((error) => console.log(error));
+              });
+             
+          } catch (err) {
+            console.log(err);
+          }
+
+         
+       
         },
         validationSchema
         
@@ -73,10 +111,7 @@ function AssignAssets() {
               if(assets.AssetAsigned===false)
               {
                 return(
-                  <option  key={assets.AssetsId} value={assets.AsstsName}>{assets.AsstsName}<input type="hidden" name="AssetsId" value={formik.values.AssetsId=assets.AssetsId}/>
-                  <input type="hidden" name="AssetModel" value={formik.values.AssetModel=assets.AssetModel}/>
-                  <input type="hidden" name="AssetsSerialNo" value={formik.values.AssetsSerialNo=assets.AssetsSerialNo}/>
-                  <input type="hidden" name="AssetsCompanyName" value={formik.values.AssetsCompanyName=assets.AssetsCompanyName}/>
+                  <option  key={assets.AssetsId} value={assets.AssetsId}>{assets.AsstsName}
                   </option>
                   )
               }
@@ -94,8 +129,7 @@ function AssignAssets() {
             {
             assetManagerContext.employees.map((Employee)=>{
             return(
-            <option  key={Employee.EmployeeId} value={Employee.EmployeeName}>{Employee.EmployeeName}
-            <input type="hidden" name="EmployeeId" value={formik.values.EmployeeId=Employee.EmployeeId}/>
+            <option  key={Employee.EmployeeId} value={Employee.EmployeeId}>{Employee.EmployeeName}
             </option>
             )
             })}
@@ -134,7 +168,7 @@ function AssignAssets() {
                     <td><span>{assets.EmployeeId}</span></td>
                     <td><span>{assets.EmployeeName}</span></td>
                     <td><span>{assets.DateOfAssigned}</span></td>
-                    <td><button onClick={(event)=>handleclick(index,assets.AssetsId)}>Delete</button></td>
+                    <td><button onClick={(event)=>handleclick(index,assets.AssetsId,assets.AssignedId)}>Delete</button></td>
                   
                   
                       

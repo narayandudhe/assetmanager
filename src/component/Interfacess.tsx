@@ -33,10 +33,7 @@ export type assetManagerContextType={
     assignedAssets:List_assets_assigned[],
     setEmployees:(data:List_Employe[]) => void,
     setAssets:(dataa:List_asset[]) => void,
-    setAssignedAssets:(dataaa:List_assets_assigned[]) => void,
-    empidd:()=>number,
-    assetsidd:()=>number,
-    assignedid:()=>number
+    setAssignedAssets:(dataaa:List_assets_assigned[]) => void
 }
 
 export const listAssetManager:assetManagerContextType={
@@ -45,10 +42,7 @@ export const listAssetManager:assetManagerContextType={
     assignedAssets:[],
     setEmployees: (data) => {},
     setAssets: (data) => {},
-    setAssignedAssets: (data) => {},
-    empidd:()=>0,
-    assetsidd:()=>0,
-    assignedid:()=>0
+    setAssignedAssets: (data) => {}
 }
 
 // export type EmployeeContextType={
