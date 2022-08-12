@@ -68,9 +68,10 @@ const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number,index:number)=>{
   SavedValues.AssetsSerialNo=b.innerText;
   SavedValues.AssetsCompanyName=c.innerText;
   SavedValues.AssetAsigned=false;
+  SavedValues.AssetsWarrenty=Number(f.innerText);
   SavedValues.AssetPurchaseDate=e.innerText;
   SavedValues.AssetPrice=Number(g.innerText);
-  setImgUrl(h.getAttribute("src")?.toString());
+  setImgUrl(h.getAttribute("alt")?.toString());
  
   
   setindex(index);
@@ -81,7 +82,7 @@ const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number,index:number)=>{
 
 const handleRemoveSpecificRow = (index:number,assetid:number) => {
   try {
-    fetch("http://localhost:51992/Asstes/"+assetid,
+    fetch(assetscontext.apiurl+"/Asstes/"+assetid,
       {
           method: "DELETE",
         
@@ -119,7 +120,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
     //setimgfile(URL.createObjectURL(e.target.files[0]));
     try
     {
-     fetch("http://localhost:51992/Asstes/1",
+     fetch(assetscontext.apiurl+"/Asstes/1",
      {
          method: "POST",
          headers: {
@@ -151,12 +152,13 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
     onSubmit={(values,{resetForm})=>{
       if(reset){
         if(imgurl){
-          values.AssetImageUrl=imgurl?.toString();
+          values.AssetImageUrl=imgurl;
           values.AssetsId=SavedValues.AssetsId;
+          values.AssetPurchaseDate=new Date(values.AssetPurchaseDate).toISOString().slice(0,10);
         }
         
         try {
-          fetch("http://localhost:51992/Asstes/"+SavedValues.AssetsId,
+          fetch(assetscontext.apiurl+"/Asstes/"+SavedValues.AssetsId,
             {
                 method: "PUT",
                 headers: {
@@ -167,6 +169,8 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
             }).
             then(response => response.json())
             .then(data => {
+              console.log(data);
+              
               const tempRows = [...assetscontext.assets]; // to avoid  direct state mutation
               tempRows.splice(index, 1,data);
              assetscontext.setAssets(tempRows);
@@ -179,9 +183,10 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
         if(imgurl)
         {
           values.AssetImageUrl=imgurl;
+          values.AssetPurchaseDate=new Date(values.AssetPurchaseDate).toISOString().slice(0,10);
         }
         try {
-          fetch("http://localhost:51992/Asstes",
+          fetch(assetscontext.apiurl+"/Asstes",
             {
                 method: "POST",
                 headers: {
@@ -203,6 +208,8 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
   setformval(initialValues);
   setreset(false);
   setbuttonname("Add Assets");  
+  var a=document.getElementById("AssetImage") as HTMLInputElement
+  a.value='';
     }}>
     <div className='form-control'>
       <Form>
@@ -251,7 +258,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
 
         <div className="form-controlc">
         <label className='adlabel' htmlFor='AssetImage'>Asset Image</label>
-        <Field className='adinput' type='file' id='AssetImage' name='AssetImage' onChange={handlepic} />
+        <Field className='adinput' accept='image/*' type='file' id='AssetImage' name='AssetImage' onChange={handlepic} />
         <ErrorMessage component="span" className='errordisplay' name='AssetImage'></ErrorMessage>
         </div>
 
@@ -285,17 +292,18 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
     {
 
 assetscontext.assets.map((assets,index)=>{
+  let d=new Date(assets.AssetPurchaseDate).toISOString().slice(0,10);
         return(
           
             <tr key={index} id={"aa"+assets.AssetsId}>
                 <td key={assets.AssetsId}><span>{assets.AssetsId}</span></td>
                
                 <td><p id={'name'+assets.AssetsId}>{assets.AsstsName}</p></td>
-                <td><img className='employeeimg' id={'assimg'+assets.AssetsId} src={assets.AssetImageUrl} alt={assets.AsstsName}/></td>
+                <td><img  className='employeeimg' id={'assimg'+assets.AssetsId} src={assetscontext.apiurl+"/AImage/"+assets.AssetImageUrl} alt={assets.AssetImageUrl}/></td>
                 <td><p id={'serial'+assets.AssetsId}> {assets.AssetsSerialNo}</p></td>
                 <td><p id={'company'+assets.AssetsId}>{assets.AssetsCompanyName}</p></td>
                 <td><p id={'model'+assets.AssetsId}>{assets.AssetModel}</p></td>
-                <td><p id={'purchase'+assets.AssetsId}>{assets.AssetPurchaseDate}</p></td>
+                <td><p id={'purchase'+assets.AssetsId}>{d}</p></td>
                 <td><p id={'warranty'+assets.AssetsId}>{assets.AssetsWarrenty}</p></td>
                 <td><p id={'price'+assets.AssetsId}>{assets.AssetPrice}</p></td>
                 <td><button id={"edit"+assets.AssetsId} onClick={(event)=>abe(event,assets.AssetsId,index)}>Edit</button></td>

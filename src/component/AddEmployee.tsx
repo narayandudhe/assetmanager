@@ -36,15 +36,23 @@ const SavedValues={
 
 
 
+
 const validationSchema=Yup.object({
    EmployeeName:Yup.string().required("Employee Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
    EmployeeAddress:Yup.string().required("Employee Address is Required"),
    EmployeeDepName:Yup.string().required("Employee Dep. Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
-  // DateOfBirth:Yup.date().required("Please Enter Date Of Birth!").max(d.toISOString().slice(0,10),"Please Choose Before Date"),
- //  DateOfJoin:Yup.date().required("Please Enter Date Of Join!").min(today.toISOString().slice(0,10),"Please Choose after date!"),
-   EmployeeEmailId:Yup.string().required("Please Enter Email Id!"),
-   EmployeeMobileNo:Yup.number().required("Please Enter Mobile No!"),
-   EmployeeSalary:Yup.number().required("Please Enter Salary!"),
+   EmployeeEmailId:Yup.string().email("Please Enter valid Email Id!").required("Please Enter Email Id!"),
+   EmployeeMobileNo:Yup.number().required("Please Enter Mobile No!").positive("Please Enter Valid Mobile No!").test('mobilecheck', 'Please Enter 10 Digit Mobile No!',function(){
+    var a=document.getElementById("EmployeeMobileNo") as HTMLInputElement
+    var va=a.value.toString();
+    if(va.length>=10 && va.length <=10)
+    {
+      return true;
+    }
+    return false;
+  }),
+   EmployeeSalary:Yup.number().required("Please Enter Salary!").min(2,"Please Enter Valid Salary"),
+   DateOfBirth:Yup.date().max(d,"Date of Birth Must Be At Earlier Than "+d.toISOString().slice(0,10)),
 
 })
 
@@ -57,7 +65,7 @@ function AddEmployee() {
 
 const handleRemoveSpecificRow = (index:number,employeeid:number) => {
   try {
-    fetch("http://localhost:51992/Employees/"+employeeid,
+    fetch(employeecontext.apiurl+"/Employees/"+employeeid,
       {
           method: "DELETE",
         
@@ -81,6 +89,8 @@ const handleRemoveSpecificRow = (index:number,employeeid:number) => {
 
   
 };
+
+
 const resetformm=()=>{
   setformval(initialValues);
 setreset(false);
@@ -107,11 +117,8 @@ SavedValues.DateOfBirth=e.innerText;
 SavedValues.DateOfJoining=f.innerText;
 SavedValues.EmployeeEmailId=g.innerText;
 SavedValues.EmployeeMobileNo=Number(h.innerText);
-if(i.getAttribute("src"))
-{
-  setimgfile(i.getAttribute("src")?.toString());
-  setImgUrl(i.getAttribute("src")?.toString());
-}
+setImgUrl(i.getAttribute("alt")?.toString());
+
 
 setindex(index);
 setformval(SavedValues);
@@ -122,7 +129,6 @@ const [reset, setreset] = useState(false);
 const [formval, setformval] = useState(initialValues);
 const [buttonname, setbuttonname] = useState("Add Employee");
 const [index, setindex] = useState(0);
-const [imgfile, setimgfile] = useState<string>();
 const [imgurl,setImgUrl]=useState<string>();
 const formdata=new FormData();
 
@@ -133,10 +139,9 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
   if(e.target.files?.length)
   {
     formdata.append("file",e.target.files[0]);
-    setimgfile(URL.createObjectURL(e.target.files[0]));
     try
     {
-     fetch("http://localhost:51992/Employees/1",
+     fetch(employeecontext.apiurl+"/Employees/1",
      {
          method: "POST",
          headers: {
@@ -172,9 +177,11 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
         if(imgurl)
         {
           values.EmployeeProfilePicUrl=imgurl;
+          values.DateOfBirth=new Date(values.DateOfBirth).toISOString().slice(0,10);
+          values.DateOfJoining=new Date(values.DateOfJoining).toISOString().slice(0,10);
         }
     try {
-      fetch("http://localhost:51992/Employees/"+SavedValues.EmployeeId,
+      fetch(employeecontext.apiurl+"/Employees/"+SavedValues.EmployeeId,
         {
             method: "PUT",
             headers: { 
@@ -203,7 +210,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
           values.DateOfJoining=new Date(values.DateOfJoining).toISOString().slice(0,10);
         }
         
-        fetch("http://localhost:51992/Employees",
+        fetch(employeecontext.apiurl+"/Employees",
           {
 
               method: "POST",
@@ -226,6 +233,8 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
       setformval(initialValues);
       setreset(false);
       setbuttonname("Add Employee"); 
+      var a=document.getElementById("EmployeePic") as HTMLInputElement
+      a.value='';
     }}
     enableReinitialize={true}
     >
@@ -264,7 +273,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
        </div>
        <div className="form-controlc">
         <label className='adlabel' htmlFor='EmployeeEmailId'>Employee Email Id</label>
-        <Field className='adinput' type='text' id='EmployeeEmailId' name='EmployeeEmailId'/>
+        <Field className='adinput eminputlowercase' type='text'  id='EmployeeEmailId' name='EmployeeEmailId'/>
         <ErrorMessage component="span" className='errordisplay' name='EmployeeEmailId'></ErrorMessage>
        </div>
        <div className="form-controlc">
@@ -282,8 +291,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
 
        <div className="form-controlc">
         <label className='adlabel' htmlFor='EmployeePic'>Employee Profile Pic</label>
-        <input className='adinput' type='file' id='EmployeePic' onChange={handlepic}/>
-        <img src={imgfile} alt="" className="employeeimg"/>
+        <input className='adinput' accept='image/*' type='file' id='EmployeePic' onChange={handlepic}/>
         <ErrorMessage component="span" className='errordisplay' name='EmployeePic'></ErrorMessage>
        </div>
 
@@ -295,7 +303,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
 <div   className='table_content list'>
 <table className='table'>
   <caption>List Of Employee</caption>
- 
+ <thead>
   <tr>
       <th>Id</th>
       <th>Image</th>
@@ -310,6 +318,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
       <th>Edit</th>
       <th>Delete</th>
   </tr>
+  </thead>
   <tbody id="emplist">
   {
  
@@ -320,7 +329,7 @@ employeecontext.employees.map((employee,index)=>{
        
           <tr key={index} id={'tr'+employee.EmployeeId}>
               <td><span>{employee.EmployeeId}</span></td>
-              <td><p><img alt='' id={'img'+employee.EmployeeId} src={employee.EmployeeProfilePicUrl} className="employeeimg"/></p></td>
+              <td><p><img alt={employee.EmployeeProfilePicUrl} id={'img'+employee.EmployeeId} src={employeecontext.apiurl+"/EImage/"+employee.EmployeeProfilePicUrl} className="employeeimg"/></p></td>
               <td><p id={'name'+employee.EmployeeId}>{employee.EmployeeName}</p></td>
               <td><p id={'address'+employee.EmployeeId}> {employee.EmployeeAddress}</p></td>
               <td><p id={'depname'+employee.EmployeeId}>{employee.EmployeeDepName}</p></td>

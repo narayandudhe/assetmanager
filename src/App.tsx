@@ -44,10 +44,10 @@ function App() {
         )
         .catch((error) => console.log(error));
     }, []);
-
+const apiurl="http://localhost:51992";
   return (
     <BrowserRouter>
-    <AssetManagerContext.Provider value={{employees,assets,assignedAssets,setEmployees,setAssets,setAssignedAssets}}>
+    <AssetManagerContext.Provider value={{employees,assets,assignedAssets,setEmployees,setAssets,setAssignedAssets,apiurl}}>
     <div className='app'>
       <Header></Header>
       </div>
