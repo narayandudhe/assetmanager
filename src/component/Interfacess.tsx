@@ -4,7 +4,13 @@ export interface List_Employe {
       EmployeeId:number,
       EmployeeName:string,
       EmployeeAddress:string,
-      EmployeeDepName:string
+      EmployeeDepName:string,
+      EmployeeProfilePicUrl:string,
+      EmployeeSalary:number,
+      DateOfBirth:string,
+      DateOfJoining:string,
+      EmployeeEmailId:string,
+      EmployeeMobileNo:number
   }
   
  export interface List_asset{
@@ -13,7 +19,11 @@ export interface List_Employe {
       AssetsSerialNo:string,
       AssetsCompanyName:string,
       AssetModel:string,
-      AssetAsigned:boolean
+      AssetAsigned:boolean,
+      AssetPurchaseDate:string,
+      AssetsWarrenty:number,
+      AssetImageUrl:string,
+      AssetPrice:number,
   }
  export interface List_assets_assigned{
         AssignedId:number,

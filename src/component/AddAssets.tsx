@@ -1,16 +1,18 @@
-import React,{useState,useContext} from 'react'
+import React,{useState,useContext, ChangeEvent} from 'react'
 import {Formik,Form,Field,ErrorMessage} from 'formik'
 import * as Yup from 'yup'
 import {AssetManagerContext} from './NodeContext'
 
 
-
+const today=new Date();
 //validation with yup
 const validationSchema=Yup.object({
   AsstsName:Yup.string().required("Asset Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
   AssetModel:Yup.string().required("Asset Model is Required"),
   AssetsSerialNo:Yup.string().required("Asset Serial No is Required"),
   AssetsCompanyName:Yup.string().required("Asset Company Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
+  AssetsWarrenty:Yup.number().required("Please Enter Asset Warranty in Months"),
+  AssetPrice:Yup.number().required("Please Enter Asset Price"),
 })
 
  const initialValues={
@@ -19,7 +21,11 @@ const validationSchema=Yup.object({
     AssetModel:'',
     AssetsSerialNo:'',
     AssetsCompanyName:'',
-    AssetAsigned:false
+    AssetAsigned:false,
+    AssetPurchaseDate:today.toISOString().slice(0,10),
+    AssetsWarrenty:0,
+    AssetImageUrl:'',
+    AssetPrice:0,
   }
  const SavedValues={
   
@@ -28,7 +34,11 @@ const validationSchema=Yup.object({
     AssetModel:'',
     AssetsSerialNo:'',
     AssetsCompanyName:'',
-    AssetAsigned:false
+    AssetAsigned:false,
+    AssetPurchaseDate:'2001-02-03',
+    AssetsWarrenty:0,
+    AssetImageUrl:'',
+    AssetPrice:0,
   }
 
 function AddAssets() {
@@ -48,12 +58,21 @@ const abe=(event:React.MouseEvent<HTMLButtonElement>,id:number,index:number)=>{
   var b=document.getElementById('serial'+id.toString()) as HTMLElement
   var c=document.getElementById('company'+id.toString()) as HTMLElement
   var d=document.getElementById('model'+id.toString()) as HTMLElement
+  var e=document.getElementById('purchase'+id.toString()) as HTMLElement
+  var f=document.getElementById('warranty'+id.toString()) as HTMLElement
+  var g=document.getElementById('price'+id.toString()) as HTMLElement
+  var h=document.getElementById('assimg'+id.toString()) as HTMLElement
   SavedValues.AssetsId=id;
   SavedValues.AsstsName=a.innerText;
   SavedValues.AssetModel= d.innerText;
   SavedValues.AssetsSerialNo=b.innerText;
   SavedValues.AssetsCompanyName=c.innerText;
   SavedValues.AssetAsigned=false;
+  SavedValues.AssetPurchaseDate=e.innerText;
+  SavedValues.AssetPrice=Number(g.innerText);
+  setImgUrl(h.getAttribute("src")?.toString());
+ 
+  
   setindex(index);
   setformval(SavedValues);
   setreset(true);
@@ -89,6 +108,39 @@ const [reset, setreset] = useState(false);
   const [formval, setformval] = useState(initialValues);
   const [buttonname, setbuttonname] = useState("Add Assets");
   const [index, setindex] = useState(0);
+  const [imgurl,setImgUrl]=useState<string>();
+const formdata=new FormData();
+
+const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
+  console.log(e.target.files);
+  if(e.target.files?.length)
+  {
+    formdata.append("file",e.target.files[0]);
+    //setimgfile(URL.createObjectURL(e.target.files[0]));
+    try
+    {
+     fetch("http://localhost:51992/Asstes/1",
+     {
+         method: "POST",
+         headers: {
+           "encType":"multipart/form-data"
+      },
+         body: formdata
+     }).
+     then(response => response.text())
+     .then(data => {
+      setImgUrl(data);
+      formdata.delete("file");
+     });
+    }
+   catch(err)
+   {
+     console.log(err);
+     
+   }  
+  
+  }
+}
 ///console.log(formik.values);
   return (
     <>
@@ -98,6 +150,11 @@ const [reset, setreset] = useState(false);
     enableReinitialize={true}
     onSubmit={(values,{resetForm})=>{
       if(reset){
+        if(imgurl){
+          values.AssetImageUrl=imgurl?.toString();
+          values.AssetsId=SavedValues.AssetsId;
+        }
+        
         try {
           fetch("http://localhost:51992/Asstes/"+SavedValues.AssetsId,
             {
@@ -106,14 +163,7 @@ const [reset, setreset] = useState(false);
                   'Accept': 'application/json',
                   'Content-Type': 'application/json'
              },
-                body: JSON.stringify({
-                  AssetsId:SavedValues.AssetsId,
-                  AsstsName: values.AsstsName,
-                  AssetsCompanyName: values.AssetsCompanyName,
-                  AssetModel: values.AssetModel,
-                  AssetAsigned:values.AssetAsigned,
-                  AssetsSerialNo:values.AssetsSerialNo
-                })
+                body: JSON.stringify(values)
             }).
             then(response => response.json())
             .then(data => {
@@ -126,6 +176,10 @@ const [reset, setreset] = useState(false);
         }
       }
       else{
+        if(imgurl)
+        {
+          values.AssetImageUrl=imgurl;
+        }
         try {
           fetch("http://localhost:51992/Asstes",
             {
@@ -134,7 +188,7 @@ const [reset, setreset] = useState(false);
                   'Accept': 'application/json',
                   'Content-Type': 'application/json'
              },
-                body: JSON.stringify(values)
+                body: JSON.stringify(values),
             }).
             then(response => response.json())
             .then(data => {
@@ -177,6 +231,30 @@ const [reset, setreset] = useState(false);
         <ErrorMessage component="span" className='errordisplay' name='AssetsCompanyName'></ErrorMessage>
         </div>
 
+        <div className="form-controlc">
+        <label className='adlabel' htmlFor='AssetsWarrenty'>Asset Waranty</label>
+        <Field className='adinput' type='number' id='AssetsWarrenty' name='AssetsWarrenty' />
+        <ErrorMessage component="span" className='errordisplay' name='AssetsWarrenty'></ErrorMessage>
+        </div>
+
+        <div className="form-controlc">
+        <label className='adlabel' htmlFor='AssetPurchaseDate'>Asset Purchase Date</label>
+        <Field className='adinput' type='date' id='AssetPurchaseDate' name='AssetPurchaseDate' />
+        <ErrorMessage component="span" className='errordisplay' name='AssetPurchaseDate'></ErrorMessage>
+        </div>
+
+        <div className="form-controlc">
+        <label className='adlabel' htmlFor='AssetPrice'>Asset Price</label>
+        <Field className='adinput' type='number' id='AssetPrice' name='AssetPrice' />
+        <ErrorMessage component="span" className='errordisplay' name='AssetPrice'></ErrorMessage>
+        </div>
+
+        <div className="form-controlc">
+        <label className='adlabel' htmlFor='AssetImage'>Asset Image</label>
+        <Field className='adinput' type='file' id='AssetImage' name='AssetImage' onChange={handlepic} />
+        <ErrorMessage component="span" className='errordisplay' name='AssetImage'></ErrorMessage>
+        </div>
+
        
 
         <button  className='submitform' type='submit'>{buttonname}</button>
@@ -189,11 +267,15 @@ const [reset, setreset] = useState(false);
     <caption>List Of Assets Available</caption>
     <thead>
     <tr>
-        <th>Assets Id</th>
-        <th>Assets Name</th>
-        <th>Assets Serial No.</th>
-        <th>Assets Company Name</th>
-        <th>Assets Model</th>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Image</th>
+        <th>Serial No</th>
+        <th>Company Name</th>
+        <th>Model</th>
+        <th>Purchase Date</th>
+        <th>Warrenty<sup>in Months</sup></th>
+        <th>Price</th>
         <th>Edit</th>
         <th>Delete</th>
     </tr>
@@ -205,14 +287,18 @@ const [reset, setreset] = useState(false);
 assetscontext.assets.map((assets,index)=>{
         return(
           
-            <tr key={index} id={"aa"+assets.AssetsId.toString()}>
+            <tr key={index} id={"aa"+assets.AssetsId}>
                 <td key={assets.AssetsId}><span>{assets.AssetsId}</span></td>
                
-                <td><p id={'name'+assets.AssetsId.toString()}>{assets.AsstsName}</p></td>
-                <td><p id={'serial'+assets.AssetsId.toString()}> {assets.AssetsSerialNo}</p></td>
-                <td><p id={'company'+assets.AssetsId.toString()}>{assets.AssetsCompanyName}</p></td>
-                <td><p id={'model'+assets.AssetsId.toString()}>{assets.AssetModel}</p></td>
-                <td><button id={"edit"+assets.AssetsId.toString()} onClick={(event)=>abe(event,assets.AssetsId,index)}>Edit</button></td>
+                <td><p id={'name'+assets.AssetsId}>{assets.AsstsName}</p></td>
+                <td><img className='employeeimg' id={'assimg'+assets.AssetsId} src={assets.AssetImageUrl} alt={assets.AsstsName}/></td>
+                <td><p id={'serial'+assets.AssetsId}> {assets.AssetsSerialNo}</p></td>
+                <td><p id={'company'+assets.AssetsId}>{assets.AssetsCompanyName}</p></td>
+                <td><p id={'model'+assets.AssetsId}>{assets.AssetModel}</p></td>
+                <td><p id={'purchase'+assets.AssetsId}>{assets.AssetPurchaseDate}</p></td>
+                <td><p id={'warranty'+assets.AssetsId}>{assets.AssetsWarrenty}</p></td>
+                <td><p id={'price'+assets.AssetsId}>{assets.AssetPrice}</p></td>
+                <td><button id={"edit"+assets.AssetsId} onClick={(event)=>abe(event,assets.AssetsId,index)}>Edit</button></td>
                 <td><button onClick={(event)=>handleRemoveSpecificRow(index,assets.AssetsId)}>Delete</button></td>
             </tr>
         )
