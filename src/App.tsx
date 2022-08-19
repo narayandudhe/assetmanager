@@ -35,11 +35,27 @@ function App() {
         )
         .catch((error) => console.log(error));
 
+        let aa:number;
         fetch("http://localhost:51992/AsstsAssigned")
-        .then((response) => response.json())
+        .then((response) => {
+          aa=response.status;
+          if(response.status===200)
+          {
+            return response.json();
+          }
+          return response.text();
+          
+        }
+        
+        )
         .then(
           (result) => {
-           setAssignedAssets(result);
+            if(aa===200)
+            {
+              setAssignedAssets(result);
+            }
+            console.log("No Data Found On Server");
+            
           }
         )
         .catch((error) => console.log(error));

@@ -17,7 +17,8 @@ const initialValues={
   DateOfBirth:d.toISOString().slice(0,10),
   DateOfJoining:today.toISOString().slice(0,10),
   EmployeeEmailId:'',
-  EmployeeMobileNo:0
+  EmployeeMobileNo:0,
+  EmployeePic:null
 
 } 
 const SavedValues={
@@ -31,33 +32,42 @@ const SavedValues={
   DateOfBirth:d.toISOString().slice(0,10),
   DateOfJoining:today.toISOString().slice(0,10),
   EmployeeEmailId:'',
-  EmployeeMobileNo:0
+  EmployeeMobileNo:0,
+  EmployeePic:null
 }
 
 
 
 
-const validationSchema=Yup.object({
-   EmployeeName:Yup.string().required("Employee Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
-   EmployeeAddress:Yup.string().required("Employee Address is Required"),
-   EmployeeDepName:Yup.string().required("Employee Dep. Name is Required").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
-   EmployeeEmailId:Yup.string().email("Please Enter valid Email Id!").required("Please Enter Email Id!"),
-   EmployeeMobileNo:Yup.number().required("Please Enter Mobile No!").positive("Please Enter Valid Mobile No!").test('mobilecheck', 'Please Enter 10 Digit Mobile No!',function(){
-    var a=document.getElementById("EmployeeMobileNo") as HTMLInputElement
-    var va=a.value.toString();
-    if(va.length>=10 && va.length <=10)
-    {
-      return true;
-    }
-    return false;
-  }),
-   EmployeeSalary:Yup.number().required("Please Enter Salary!").min(2,"Please Enter Valid Salary"),
-   DateOfBirth:Yup.date().max(d,"Date of Birth Must Be At Earlier Than "+d.toISOString().slice(0,10)),
 
-})
 
 function AddEmployee() {
 
+  const validationSchema=Yup.object({
+    EmployeeName:Yup.string().required("Please Enter Employee Name!").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
+    EmployeeAddress:Yup.string().required("Please Enter Employee Address!"),
+    EmployeeDepName:Yup.string().required("Please Enter Employee Dep. Name!").matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed"),
+    EmployeeEmailId:Yup.string().email("Please Enter valid Email Id!").required("Please Enter Email Id!"),
+    EmployeeMobileNo:Yup.number().required("Please Enter Mobile No!").positive("Please Enter Valid Mobile No!").test('mobilecheck', 'Please Enter 10 Digit Mobile No!',function(){
+     var a=document.getElementById("EmployeeMobileNo") as HTMLInputElement
+     var va=a.value.toString();
+     if(va.length>=10 && va.length <=10)
+     {
+       return true;
+     }
+     return false;
+   }),
+    EmployeeSalary:Yup.number().required("Please Enter Salary!").min(2,"Please Enter Valid Salary"),
+    DateOfBirth:Yup.date().max(d,"Date of Birth Must Be At Earlier Than "+d.toISOString().slice(0,10)),
+    EmployeePic:Yup.mixed().test('piccheck', 'Please Choose Employee Profile Pic!',function(){
+     if(imgurl !='')
+     {
+       return true;
+     }
+     return false;
+   }),
+ 
+ })
 
 
   //implement employee context
@@ -134,7 +144,6 @@ const formdata=new FormData();
 
 const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
   console.log(e.target.files);
- 
 
   if(e.target.files?.length)
   {
@@ -152,8 +161,6 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
      then(response => response.text())
      .then(data => {
       setImgUrl(data);
-      console.log(data);
-      
       formdata.delete("file");
      });
     }
@@ -291,7 +298,7 @@ const handlepic=(e:ChangeEvent<HTMLInputElement>)=> {
 
        <div className="form-controlc">
         <label className='adlabel' htmlFor='EmployeePic'>Employee Profile Pic</label>
-        <input className='adinput' accept='image/*' type='file' id='EmployeePic' onChange={handlepic}/>
+        <Field className='adinput' accept='image/*' type='file' name='EmployeePic' id='EmployeePic' onChange={handlepic}/>
         <ErrorMessage component="span" className='errordisplay' name='EmployeePic'></ErrorMessage>
        </div>
 
@@ -359,3 +366,5 @@ employeecontext.employees.map((employee,index)=>{
 }
 
 export default AddEmployee;
+
+
